@@ -109,7 +109,7 @@ func (m *MockClient) Token() cmdutils.Token {
 // mockToken implements the Token interface for testing
 type mockToken struct{}
 
-func (t *mockToken) Create() (string, error) {
+func (t *mockToken) Create(alg interface{}, claims interface{}, subject string, expiryTime int64) (string, error) {
 	return "mock-token", nil
 }
 
@@ -216,8 +216,11 @@ func (m *MockTopics) Compact(topic utils.TopicName) error {
 	return nil
 }
 
-func (m *MockTopics) CompactStatus(topic utils.TopicName) (interface{}, error) {
-	return map[string]interface{}{"status": "idle"}, nil
+func (m *MockTopics) CompactStatus(topic utils.TopicName) (utils.LongRunningProcessStatus, error) {
+	return utils.LongRunningProcessStatus{
+		Status: "IDLE",
+		LastError: "",
+	}, nil
 }
 
 func (m *MockTopics) GetPartitionedStats(topic utils.TopicName, perPartition bool, getPreciseBacklog bool, subscriptionBacklogSize bool, getEarliestTimeInBacklog bool, excludePublishers bool, excludeConsumers bool) (*utils.PartitionedTopicStats, error) {
