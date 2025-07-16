@@ -103,7 +103,18 @@ func (m *MockClient) Packages() admin.Packages {
 }
 
 func (m *MockClient) Token() cmdutils.Token {
-	return &cmdutils.token{}
+	return &token{}
+}
+
+// token implements the Token interface for testing
+type token struct{}
+
+func (t *token) Generate() (string, error) {
+	return "mock-token", nil
+}
+
+func (t *token) Validate(token string) error {
+	return nil
 }
 
 // MockTopics implements the admin.Topics interface for testing
@@ -111,7 +122,16 @@ type MockTopics struct {
 	Topics map[string]*utils.PartitionedTopicMetadata
 	Permissions map[string]map[string][]utils.AuthAction
 	Stats map[string]*utils.TopicStats
-	InternalStats map[string]*utils.TopicInternalStats
+	InternalStats map[string]*MockTopicInternalStats
+}
+
+// MockTopicInternalStats represents internal stats for testing
+type MockTopicInternalStats struct {
+	EntriesAddedCounter int64
+	NumberOfEntries     int64
+	TotalSize           int64
+	CurrentLedgerEntries int64
+	CurrentLedgerSize    int64
 }
 
 func NewMockTopics() *MockTopics {
@@ -119,7 +139,7 @@ func NewMockTopics() *MockTopics {
 		Topics: make(map[string]*utils.PartitionedTopicMetadata),
 		Permissions: make(map[string]map[string][]utils.AuthAction),
 		Stats: make(map[string]*utils.TopicStats),
-		InternalStats: make(map[string]*utils.TopicInternalStats),
+		InternalStats: make(map[string]*MockTopicInternalStats),
 	}
 }
 
@@ -180,12 +200,16 @@ func (m *MockTopics) GetStats(topic utils.TopicName, getPreciseBacklog bool, sub
 	return &utils.TopicStats{}, nil
 }
 
-func (m *MockTopics) GetInternalStats(topic utils.TopicName) (*utils.TopicInternalStats, error) {
+func (m *MockTopics) GetInternalStats(topic utils.TopicName) (interface{}, error) {
 	topicFqn := topic.String()
 	if stats, exists := m.InternalStats[topicFqn]; exists {
 		return stats, nil
 	}
-	return &utils.TopicInternalStats{}, nil
+	return &MockTopicInternalStats{}, nil
+}
+
+func (m *MockTopics) Compact(topic utils.TopicName) error {
+	return nil
 }
 
 func (m *MockTopics) GetPartitionedStats(topic utils.TopicName, perPartition bool, getPreciseBacklog bool, subscriptionBacklogSize bool, getEarliestTimeInBacklog bool, excludePublishers bool, excludeConsumers bool) (*utils.PartitionedTopicStats, error) {

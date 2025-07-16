@@ -19,6 +19,7 @@ package topic
 
 import (
 	"bytes"
+	"runtime"
 
 	"github.com/streamnative/pulsarctl/pkg/cmdutils"
 
@@ -26,17 +27,24 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// Override the NewPulsarClient function for testing
-var origNewPulsarClient = cmdutils.NewPulsarClient
+// Mock client for testing
 var mockClient cmdutils.Client
 
 func TestTopicCommands(newVerb func(cmd *cmdutils.VerbCmd), args []string) (out *bytes.Buffer,
 	execErr, nameErr, err error) {
-	// Use mock client for tests
+	// Initialize mock client for tests
+	if mockClient == nil {
+		mockClient = NewMockClient()
+	}
+	
+	// Override NewPulsarClient for testing
+	originalNewPulsarClient := cmdutils.NewPulsarClient
+	defer func() {
+		// Restore original function
+		cmdutils.NewPulsarClient = originalNewPulsarClient
+	}()
+	
 	cmdutils.NewPulsarClient = func() cmdutils.Client {
-		if mockClient == nil {
-			mockClient = NewMockClient()
-		}
 		return mockClient
 	}
 	var execError error
@@ -73,7 +81,5 @@ func TestTopicCommands(newVerb func(cmd *cmdutils.VerbCmd), args []string) (out 
 	rootCmd.AddCommand(resourceCmd)
 	err = rootCmd.Execute()
 
-	// Reset the original function after test
-cmdutils.NewPulsarClient = origNewPulsarClient
-return buf, execError, nameError, err
+	return buf, execError, nameError, err
 }
