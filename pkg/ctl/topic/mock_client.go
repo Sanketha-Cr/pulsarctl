@@ -21,6 +21,7 @@ import (
 	"github.com/apache/pulsar-client-go/pulsaradmin/pkg/admin"
 	"github.com/apache/pulsar-client-go/pulsaradmin/pkg/utils"
 	"github.com/streamnative/pulsarctl/pkg/cmdutils"
+	"github.com/streamnative/pulsarctl/pkg/pulsar/common/algorithm"
 )
 
 // MockClient is a mock implementation of the admin client for testing
@@ -109,7 +110,7 @@ func (m *MockClient) Token() cmdutils.Token {
 // mockToken implements the Token interface for testing
 type mockToken struct{}
 
-func (t *mockToken) Create(alg interface{}, claims interface{}, subject string, expiryTime int64) (string, error) {
+func (t *mockToken) Create(alg algorithm.Algorithm, claims interface{}, subject string, expiryTime int64) (string, error) {
 	return "mock-token", nil
 }
 
@@ -151,6 +152,15 @@ func (m *MockTopics) Create(topic utils.TopicName, partitions int) error {
 	topicFqn := topic.String()
 	m.Topics[topicFqn] = &utils.PartitionedTopicMetadata{
 		Partitions: partitions,
+	}
+	return nil
+}
+
+func (m *MockTopics) CreateWithProperties(topic utils.TopicName, partitions int, properties map[string]string) error {
+	topicFqn := topic.String()
+	m.Topics[topicFqn] = &utils.PartitionedTopicMetadata{
+		Partitions: partitions,
+		Properties: properties,
 	}
 	return nil
 }
