@@ -15,41 +15,22 @@
 // specific language governing permissions and limitations
 // under the License.
 
-package pulsar
+package topic
 
 import (
-	"context"
-	"net/http"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/streamnative/pulsarctl/pkg/test"
 )
 
-func TestNewStandalone(t *testing.T) {
-	test.SkipIfDockerUnavailable(t)
-	ctx := context.Background()
-	standalone := NewStandalone("apachepulsar/pulsar:latest")
-	err := standalone.Start(ctx)
-	// nolint
-	defer standalone.Stop(ctx)
-	if err != nil {
-		t.Fatal(err)
-	}
+func TestMockClient(t *testing.T) {
+	// Test that the mock client is used in tests
+	args := []string{"create", "test-mock-topic", "2"}
+	_, execErr, _, _ := TestTopicCommands(CreateTopicCmd, args)
+	assert.Nil(t, execErr)
 
-	port, err := standalone.MappedPort(ctx, "8080")
-	if err != nil {
-		t.Fatal(err)
-	}
-	path := "http://localhost:" + port.Port() + "/admin/v2/tenants"
-
-	resp, err := http.Get(path)
-	// nolint
-	defer resp.Body.Close()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	assert.Equal(t, 200, resp.StatusCode)
-
+	args = []string{"get", "test-mock-topic"}
+	out, execErr, _, _ := TestTopicCommands(GetTopicCmd, args)
+	assert.Nil(t, execErr)
+	assert.Contains(t, out.String(), "2") // Should contain the partitions number
 }

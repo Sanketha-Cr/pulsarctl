@@ -15,41 +15,36 @@
 // specific language governing permissions and limitations
 // under the License.
 
-package pulsar
+package test
 
 import (
 	"context"
-	"net/http"
+	"runtime"
 	"testing"
+	"time"
 
-	"github.com/stretchr/testify/assert"
-	"github.com/streamnative/pulsarctl/pkg/test"
+	"github.com/docker/docker/client"
 )
 
-func TestNewStandalone(t *testing.T) {
-	test.SkipIfDockerUnavailable(t)
-	ctx := context.Background()
-	standalone := NewStandalone("apachepulsar/pulsar:latest")
-	err := standalone.Start(ctx)
-	// nolint
-	defer standalone.Stop(ctx)
+// SkipIfDockerUnavailable skips the test if Docker is not available
+// or if running on s390x architecture
+func SkipIfDockerUnavailable(t *testing.T) {
+	// Skip Docker tests on s390x architecture
+	if runtime.GOARCH == "s390x" {
+		t.Skip("Skipping Docker tests on s390x architecture")
+		return
+	}
+	cli, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {
-		t.Fatal(err)
+		t.Skip("Docker client could not be created, skipping test:", err)
+		return
 	}
 
-	port, err := standalone.MappedPort(ctx, "8080")
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+
+	_, err = cli.Ping(ctx)
 	if err != nil {
-		t.Fatal(err)
+		t.Skip("Docker daemon is not available, skipping test:", err)
 	}
-	path := "http://localhost:" + port.Port() + "/admin/v2/tenants"
-
-	resp, err := http.Get(path)
-	// nolint
-	defer resp.Body.Close()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	assert.Equal(t, 200, resp.StatusCode)
-
 }

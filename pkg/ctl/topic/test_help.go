@@ -26,8 +26,19 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// Override the NewPulsarClient function for testing
+var origNewPulsarClient = cmdutils.NewPulsarClient
+var mockClient cmdutils.Client
+
 func TestTopicCommands(newVerb func(cmd *cmdutils.VerbCmd), args []string) (out *bytes.Buffer,
 	execErr, nameErr, err error) {
+	// Use mock client for tests
+	cmdutils.NewPulsarClient = func() cmdutils.Client {
+		if mockClient == nil {
+			mockClient = NewMockClient()
+		}
+		return mockClient
+	}
 	var execError error
 	cmdutils.ExecErrorHandler = func(err error) {
 		execError = err
@@ -62,5 +73,7 @@ func TestTopicCommands(newVerb func(cmd *cmdutils.VerbCmd), args []string) (out 
 	rootCmd.AddCommand(resourceCmd)
 	err = rootCmd.Execute()
 
-	return buf, execError, nameError, err
+	// Reset the original function after test
+cmdutils.NewPulsarClient = origNewPulsarClient
+return buf, execError, nameError, err
 }

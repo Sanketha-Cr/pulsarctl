@@ -23,9 +23,11 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/streamnative/pulsarctl/pkg/test"
 )
 
 func TestDefaultCluster(t *testing.T) {
+	test.SkipIfDockerUnavailable(t)
 	ctx := context.Background()
 	bkCluster, err := DefaultCluster()
 	// nolint
