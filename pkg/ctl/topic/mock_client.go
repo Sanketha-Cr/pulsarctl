@@ -103,17 +103,21 @@ func (m *MockClient) Packages() admin.Packages {
 }
 
 func (m *MockClient) Token() cmdutils.Token {
-	return &token{}
+	return &mockToken{}
 }
 
-// token implements the Token interface for testing
-type token struct{}
+// mockToken implements the Token interface for testing
+type mockToken struct{}
 
-func (t *token) Generate() (string, error) {
+func (t *mockToken) Create() (string, error) {
 	return "mock-token", nil
 }
 
-func (t *token) Validate(token string) error {
+func (t *mockToken) Generate() (string, error) {
+	return "mock-token", nil
+}
+
+func (t *mockToken) Validate(token string) error {
 	return nil
 }
 
@@ -210,6 +214,10 @@ func (m *MockTopics) GetInternalStats(topic utils.TopicName) (interface{}, error
 
 func (m *MockTopics) Compact(topic utils.TopicName) error {
 	return nil
+}
+
+func (m *MockTopics) CompactStatus(topic utils.TopicName) (interface{}, error) {
+	return map[string]interface{}{"status": "idle"}, nil
 }
 
 func (m *MockTopics) GetPartitionedStats(topic utils.TopicName, perPartition bool, getPreciseBacklog bool, subscriptionBacklogSize bool, getEarliestTimeInBacklog bool, excludePublishers bool, excludeConsumers bool) (*utils.PartitionedTopicStats, error) {
